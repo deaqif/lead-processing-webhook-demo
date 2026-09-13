@@ -1,0 +1,19 @@
+{
+  "form_id": "3",
+  "entry_id": "1428",
+  "form_title": "Enterprise Automation Inquiry",
+  "first_name": "Tariq",
+  "last_name": "Mansor",
+  "email": "tariq.mansor@novatech.my",
+  "phone": "+60139982145",
+  "company": "NovaTech Solutions Sdn Bhd",
+  "service_interest": "Workflow & API Automation",
+  "estimated_budget": "RM 15,000 - RM 30,000",
+  "message": "We need to connect our web lead intake directly to Google Sheets and receive instant alerts on our private operations Telegram channel.",
+  "utm_source": "google_search",
+  "utm_medium": "cpc",
+  "utm_campaign": "b2b_lead_gen_q3",
+  "source_url": "https://company.example.com/contact-sales",
+  "ip_address": "175.143.22.10",
+  "created_at": "2026-09-13 13:30:00"
+}

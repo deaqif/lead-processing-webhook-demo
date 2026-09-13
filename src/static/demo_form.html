@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Processing & Notification Automation Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #090d16;
+            --card-bg: rgba(17, 24, 39, 0.85);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.35);
+            --accent: #10b981;
+            --accent-purple: #8b5cf6;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --input-bg: rgba(15, 23, 42, 0.7);
+            --input-border: rgba(255, 255, 255, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 16px 64px 16px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Glow Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: 25%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 50%, transparent 70%);
+            border-radius: 50%;
+            z-index: -1;
+            filter: blur(80px);
+            pointer-events: none;
+        }
+
+        .header {
+            text-align: center;
+            max-width: 840px;
+            margin-bottom: 32px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #60a5fa;
+            margin-bottom: 16px;
+            letter-spacing: 0.3px;
+        }
+
+        .badge .dot {
+            width: 8px;
+            height: 8px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #3b82f6;
+        }
+
+        h1 {
+            font-size: clamp(26px, 4vw, 36px);
+            font-weight: 800;
+            line-height: 1.25;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+
+        p.subtitle {
+            font-size: 15px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .pipeline-flow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 12px 18px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #cbd5e1;
+        }
+
+        .flow-arrow {
+            color: #64748b;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(16px);
+        }
+
+        .card-header {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .nav-links a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            margin-left: 16px;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #93c5fd;
+            text-decoration: underline;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .col-span-2 {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .col-span-2 {
+                grid-column: span 1;
+            }
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 6px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 14px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            color: var(--text);
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+            background-color: rgba(15, 23, 42, 0.9);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        .utm-section {
+            margin-top: 14px;
+            padding: 14px;
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px dashed var(--input-border);
+            border-radius: 10px;
+        }
+
+        .utm-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            margin-top: 24px;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 28px -5px rgba(37, 99, 235, 0.6);
+            background: linear-gradient(135deg, #1d4ed8, #2563eb);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Result Panel */
+        #result-panel {
+            display: none;
+            margin-top: 24px;
+            padding: 20px;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--card-border);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .status-pill.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .status-pill.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .integration-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .channel-tag {
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .channel-tag.active {
+            border-color: #34d399;
+            color: #34d399;
+        }
+
+        pre {
+            font-family: 'JetBrains Mono', monospace;
+            background: #050811;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #a5b4fc;
+            overflow-x: auto;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            max-height: 280px;
+        }
+
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 13px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="badge">
+            <span class="dot"></span>
+            Technical Showcase Demo
+        </div>
+        <h1>Lead Processing & Notification Automation</h1>
+        <p class="subtitle">
+            Simulated <strong>Fluent Forms Pro</strong> webhook pipeline with payload normalization, SQLite persistence, Google Sheets syncing, transactional email, and Telegram Bot notification.
+        </p>
+
+        <div class="pipeline-flow">
+            <span class="flow-step">📝 Web Form</span>
+            <span class="flow-arrow">➔</span>
+            <span class="flow-step">⚡ Webhook</span>
+            <span class="flow-arrow">➔</span>
+            <span class="flow-step">🛡️ Validation</span>
+            <span class="flow-arrow">➔</span>
+            <span class="flow-step">💾 SQLite</span>
+            <span class="flow-arrow">➔</span>
+            <span class="flow-step">📊 Google Sheets</span>
+            <span class="flow-arrow">➔</span>
+            <span class="flow-step">✉️ Email</span>
+            <span class="flow-arrow">➔</span>
+            <span class="flow-step">📱 Telegram</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Inbound Lead Submission (Simulated Fluent Forms)</span>
+                <div class="nav-links">
+                    <a href="/docs" target="_blank">Interactive Swagger Docs ↗</a>
+                    <a href="/api/v1/leads" target="_blank">Stored Leads API ↗</a>
+                </div>
+            </div>
+
+            <form id="leadForm">
+                <div class="form-grid">
+                    <div>
+                        <label for="first_name">First Name *</label>
+                        <input type="text" id="first_name" name="first_name" required value="Irfan">
+                    </div>
+                    <div>
+                        <label for="last_name">Last Name *</label>
+                        <input type="text" id="last_name" name="last_name" required value="Hakim">
+                    </div>
+
+                    <div>
+                        <label for="email">Business Email *</label>
+                        <input type="email" id="email" name="email" required value="irfan.hakim@crestsol.com">
+                    </div>
+                    <div>
+                        <label for="phone">Phone Number</label>
+                        <input type="text" id="phone" name="phone" value="+60178829910">
+                    </div>
+
+                    <div>
+                        <label for="company">Company / Organization</label>
+                        <input type="text" id="company" name="company" value="Crest Solutions Sdn Bhd">
+                    </div>
+                    <div>
+                        <label for="service_interest">Service Interest</label>
+                        <select id="service_interest" name="service_interest">
+                            <option value="Workflow & API Automation" selected>Workflow & API Automation</option>
+                            <option value="AI Agents & LLM Integration">AI Agents & LLM Integration</option>
+                            <option value="Internal Tools & Reporting">Internal Tools & Reporting</option>
+                            <option value="Custom Webhook Pipelines">Custom Webhook Pipelines</option>
+                        </select>
+                    </div>
+
+                    <div class="col-span-2">
+                        <label for="estimated_budget">Estimated Budget Range</label>
+                        <select id="estimated_budget" name="estimated_budget">
+                            <option value="RM 5,000 - RM 15,000">RM 5,000 - RM 15,000</option>
+                            <option value="RM 15,000 - RM 30,000" selected>RM 15,000 - RM 30,000</option>
+                            <option value="RM 30,000+">RM 30,000+</option>
+                            <option value="Flexible / To be scoped">Flexible / To be scoped</option>
+                        </select>
+                    </div>
+
+                    <div class="col-span-2">
+                        <label for="message">Project Requirements / Inquiry *</label>
+                        <textarea id="message" name="message" required>Looking to automate inbound Fluent Forms submissions into Google Sheets and trigger immediate team notifications on Telegram.</textarea>
+                    </div>
+                </div>
+
+                <div class="utm-section">
+                    <div class="utm-title">Simulated Marketing Attribution (Hidden Fields)</div>
+                    <div class="form-grid">
+                        <div>
+                            <label for="utm_source">UTM Source</label>
+                            <input type="text" id="utm_source" name="utm_source" value="google_search">
+                        </div>
+                        <div>
+                            <label for="utm_campaign">UTM Campaign</label>
+                            <input type="text" id="utm_campaign" name="utm_campaign" value="q3_enterprise_automation">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="submit-btn">
+                    <span>⚡ Trigger Webhook Pipeline</span>
+                </button>
+            </form>
+
+            <div id="result-panel">
+                <div class="result-header">
+                    <div>
+                        <span id="status-tag" class="status-pill success">● Status: Processed</span>
+                        <span id="lead-id-tag" style="margin-left: 10px; font-size: 12px; color: #94a3b8;"></span>
+                    </div>
+                    <span id="exec-time" style="font-size: 12px; color: #64748b; font-family: monospace;"></span>
+                </div>
+
+                <div class="integration-badges">
+                    <span id="badge-db" class="channel-tag active">💾 SQLite: Stored</span>
+                    <span id="badge-sheets" class="channel-tag active">📊 Google Sheets: Synced</span>
+                    <span id="badge-email" class="channel-tag active">✉️ Email: Dispatched</span>
+                    <span id="badge-telegram" class="channel-tag active">📱 Telegram: Alerted</span>
+                </div>
+
+                <div style="margin-bottom: 8px; font-size: 12px; font-weight: 600; color: #94a3b8;">JSON Pipeline Response:</div>
+                <pre id="json-output"></pre>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        Lead Processing & Notification Automation Demo &bull; Built with FastAPI, Pydantic, SQLite, and Telegram Bot Integration
+    </footer>
+
+    <script>
+        const form = document.getElementById('leadForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const resultPanel = document.getElementById('result-panel');
+        const statusTag = document.getElementById('status-tag');
+        const leadIdTag = document.getElementById('lead-id-tag');
+        const execTime = document.getElementById('exec-time');
+        const jsonOutput = document.getElementById('json-output');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>⏳ Processing Pipeline...</span>';
+
+            const payload = {
+                form_id: "3",
+                entry_id: Math.floor(1000 + Math.random() * 9000),
+                form_title: "Consultation Request Form",
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                company: document.getElementById('company').value,
+                service_interest: document.getElementById('service_interest').value,
+                estimated_budget: document.getElementById('estimated_budget').value,
+                message: document.getElementById('message').value,
+                utm_source: document.getElementById('utm_source').value,
+                utm_medium: "cpc",
+                utm_campaign: document.getElementById('utm_campaign').value,
+                ip_address: "127.0.0.1",
+                source_url: window.location.href
+            };
+
+            try {
+                const response = await fetch('/api/v1/webhook/fluent-forms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Webhook-Secret': 'demo_secret_token_12345'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                resultPanel.style.display = 'block';
+                jsonOutput.textContent = JSON.stringify(data, null, 2);
+
+                if (data.success) {
+                    statusTag.className = 'status-pill success';
+                    statusTag.textContent = '● Status: Completed';
+                    leadIdTag.textContent = 'Lead ID: ' + data.lead_id;
+                    execTime.textContent = data.execution_time_ms + ' ms';
+
+                    document.getElementById('badge-db').className = data.database_saved ? 'channel-tag active' : 'channel-tag';
+                    document.getElementById('badge-sheets').className = data.google_sheets_synced ? 'channel-tag active' : 'channel-tag';
+                    document.getElementById('badge-email').className = data.email_dispatched ? 'channel-tag active' : 'channel-tag';
+                    document.getElementById('badge-telegram').className = data.telegram_notified ? 'channel-tag active' : 'channel-tag';
+                } else {
+                    statusTag.className = 'status-pill error';
+                    statusTag.textContent = '● Status: ' + (data.message || 'Failed');
+                    leadIdTag.textContent = '';
+                    execTime.textContent = (data.execution_time_ms || 0) + ' ms';
+                }
+
+                resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } catch (err) {
+                resultPanel.style.display = 'block';
+                statusTag.className = 'status-pill error';
+                statusTag.textContent = '● Network / Server Error';
+                jsonOutput.textContent = err.toString();
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>⚡ Trigger Webhook Pipeline</span>';
+            }
+        });
+    </script>
+</body>
+</html>
